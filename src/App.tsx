@@ -51,7 +51,6 @@ import {
   Maximize
 } from 'lucide-react';
 import { motion, AnimatePresence, useAnimation } from 'motion/react';
-import { InstallPWA } from './components/InstallPWA';
 import { format, differenceInDays, parseISO, isBefore, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
 import Quagga from '@ericblade/quagga2';
@@ -724,28 +723,6 @@ const InventoryApp = () => {
               </Button>
             </div>
 
-            {!isStandalone && (
-              <div className="bg-blue-50 border border-blue-100 rounded-[32px] p-6 text-blue-900 shadow-sm">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="bg-blue-600 text-white p-2 rounded-xl">
-                    <Package size={20} />
-                  </div>
-                  <h3 className="text-sm font-black uppercase tracking-tight">Installa l'App</h3>
-                </div>
-                <p className="text-xs font-medium opacity-80 mb-4">
-                  Per far funzionare correttamente il <b>Flash</b> e la <b>Messa a Fuoco</b>, installa l'app sulla tua schermata home.
-                </p>
-                <button 
-                  onClick={deferredPrompt ? handleInstallClick : () => {
-                    alert("Per installare:\n\nAndroid: Clicca i 3 puntini in alto a destra -> 'Installa app'\n\niOS: Clicca il tasto 'Condividi' (quadrato con freccia) -> 'Aggiungi alla schermata Home'");
-                  }}
-                  className="w-full bg-blue-600 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-200"
-                >
-                  {deferredPrompt ? "Installa Ora" : "Guida Installazione"}
-                </button>
-              </div>
-            )}
-
             {/* Stats Summary */}
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 tracking-wider">Stato Scorte</h3>
@@ -772,7 +749,15 @@ const InventoryApp = () => {
                   const isExpired = isBefore(expiry, new Date());
                   
                   return (
-                    <div key={p.id || `exp-${idx}`} className={`${isExpired ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'} p-4 rounded-2xl border flex items-center gap-4`}>
+                    <motion.div 
+                      key={p.id || `exp-${idx}`} 
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setSearchQuery(p.barcode);
+                        setActiveTab('list');
+                      }}
+                      className={`${isExpired ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'} p-4 rounded-2xl border flex items-center gap-4 cursor-pointer`}
+                    >
                       <div className={`${isExpired ? 'bg-red-500' : 'bg-orange-500'} p-2 rounded-xl text-white`}>
                         <Calendar size={20} />
                       </div>
@@ -786,12 +771,20 @@ const InventoryApp = () => {
                         <p className={`font-black ${isExpired ? 'text-red-600' : 'text-orange-600'}`}>{p.currentQuantity}</p>
                         <p className="text-[10px] text-gray-400 uppercase font-bold">{p.unit}</p>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
 
                 {lowStockProducts.map((p, idx) => (
-                  <div key={p.id || `low-${idx}`} className="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-4">
+                  <motion.div 
+                    key={p.id || `low-${idx}`} 
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setSearchQuery(p.barcode);
+                      setActiveTab('list');
+                    }}
+                    className="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-4 cursor-pointer"
+                  >
                     <div className="bg-red-500 p-2 rounded-xl text-white">
                       <AlertTriangle size={20} />
                     </div>
@@ -800,7 +793,7 @@ const InventoryApp = () => {
                       <p className="text-xs text-red-700">Scorta critica: {p.currentQuantity} {p.unit}</p>
                     </div>
                     <ChevronRight className="text-red-300" />
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
@@ -1650,7 +1643,6 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <AppContent />
-        <InstallPWA />
       </AuthProvider>
     </ErrorBoundary>
   );
