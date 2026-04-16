@@ -13,7 +13,7 @@ export default defineConfig(({mode}) => {
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: 'auto',
-        includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'pwa-512x512-maskable.png', 'app.webmanifest'],
+        includeAssets: ['LogistiQo.png', 'app.webmanifest'],
         manifest: false, // Disabilitiamo la generazione automatica per usare il file fisico
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],

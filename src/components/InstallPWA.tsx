@@ -95,11 +95,11 @@ export const InstallPWA = () => {
                 onClick={handleInstallClick}
                 className="flex flex-1 items-center gap-3 active:scale-[0.98] transition-transform text-left"
               >
-                <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 flex-shrink-0">
-                  <Download size={20} />
+                <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-700">
+                  <img src="/LogistiQo.png" alt="App Icon" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold">Installa RistoStock</div>
+                  <div className="text-sm font-bold">Installa LogistiQo</div>
                   <div className="text-[10px] text-slate-400 font-medium">App veloce sulla tua Home</div>
                 </div>
               </button>
@@ -148,14 +148,14 @@ export const InstallPWA = () => {
               </div>
 
               <div className="flex flex-col items-center text-center gap-6">
-                <div className="w-16 h-16 bg-indigo-500 text-white rounded-2xl shadow-xl shadow-indigo-500/20 flex items-center justify-center">
-                  <PlusSquare size={32} />
+                <div className="w-20 h-20 rounded-[2rem] overflow-hidden shadow-2xl shadow-indigo-500/30 border-2 border-slate-700">
+                  <img src="/LogistiQo.png" alt="App Icon" className="w-full h-full object-cover" />
                 </div>
                 
                 <div className="space-y-2">
                   <h3 className="text-xl font-bold text-white">Installa su iPhone</h3>
                   <p className="text-slate-400 text-sm">
-                    Segui questi passaggi per aggiungere RistoStock alla tua schermata principale:
+                    Segui questi passaggi per aggiungere LogistiQo alla tua schermata principale:
                   </p>
                 </div>
 

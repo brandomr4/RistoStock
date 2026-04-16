@@ -1,4 +1,4 @@
-# RistoStock - Guida al Deployment
+# LogistiQo - Guida al Deployment
 
 Questa guida spiega come pubblicare l'applicazione su **Cloudflare Pages** collegandola a un repository **GitHub**.
 
@@ -27,7 +27,7 @@ Questa guida spiega come pubblicare l'applicazione su **Cloudflare Pages** colle
 
 ## 3. Configurazione su Firebase
 1. Vai nella [Console Firebase](https://console.firebase.google.com/).
-2. In **Authentication** -> **Settings** -> **Authorized domains**, aggiungi il dominio di Cloudflare (es. `ristostock.pages.dev`).
+2. In **Authentication** -> **Settings** -> **Authorized domains**, aggiungi il dominio di Cloudflare (es. `logistiqo.pages.dev`).
 3. Assicurati che le **Firestore Rules** siano pubblicate (usa il file `firestore.rules` incluso nel progetto).
 
 ## 4. Comandi Locali

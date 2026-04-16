@@ -701,7 +701,7 @@ const InventoryApp = () => {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-blue-600">RISTOSTOCK</h1>
+          <h1 className="text-2xl font-black tracking-tight text-blue-600">LogistiQo</h1>
           <p className="text-xs text-gray-500 font-medium uppercase tracking-widest">Magazzino Intelligente</p>
         </div>
         <button onClick={logout} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
@@ -1615,7 +1615,7 @@ const LoginScreen = () => {
         <div className="bg-white p-6 rounded-[40px] inline-block mb-6 shadow-2xl">
           <Package size={64} className="text-blue-600" />
         </div>
-        <h1 className="text-5xl font-black tracking-tighter mb-2">RISTOSTOCK</h1>
+        <h1 className="text-5xl font-black tracking-tighter mb-2">LogistiQo</h1>
         <p className="text-blue-100 font-medium opacity-80">Gestione magazzino professionale</p>
       </motion.div>
       
