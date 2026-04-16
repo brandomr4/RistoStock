@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A product in the restaurant inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "barcode": { "type": "string" },
+        "supplier": { "type": "string" },
+        "unit": { "type": "string" },
+        "currentQuantity": { "type": "number" },
+        "minQuantity": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "barcode", "supplier", "unit", "currentQuantity", "minQuantity"]
+    },
+    "Movement": {
+      "title": "Movement",
+      "description": "A stock movement (in or out)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "type": { "type": "string", "enum": ["IN", "OUT", "CREATE", "DELETE", "UPDATE"] },
+        "quantity": { "type": "number" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "productName": { "type": "string" }
+      },
+      "required": ["productId", "type", "timestamp", "userId"]
+    },
+    "StockLot": {
+      "title": "StockLot",
+      "description": "A specific lot of a product with a supplier and expiration date",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "quantity": { "type": "number" },
+        "expiryDate": { "type": "string", "format": "date" },
+        "supplier": { "type": "string" },
+        "barcode": { "type": "string" },
+        "receivedDate": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "quantity", "expiryDate", "supplier", "barcode", "receivedDate"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Collection of inventory products"
+    },
+    "/products/{productId}/batches/{batchId}": {
+      "schema": "StockLot",
+      "description": "Batches of stock for a specific product"
+    },
+    "/movements/{movementId}": {
+      "schema": "Movement",
+      "description": "History of stock movements"
+    }
+  }
+}

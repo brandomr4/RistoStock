@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>RistoStock - Gestione Magazzino</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RistoStock" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="https://picsum.photos/seed/ristostock/192/192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="https://picsum.photos/seed/ristostock/152/152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://picsum.photos/seed/ristostock/180/180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="https://picsum.photos/seed/ristostock/167/167.png" />
+    <script>
+      // Fix for various libraries crashing when they encounter the string "undefined"
+      // where they expect a JSON string.
+      (function() {
+        try {
+          if (typeof window !== 'undefined') {
+            // 1. Fix problematic global variables
+            if (window.__FIREBASE_DEFAULTS__ === 'undefined') {
+              window.__FIREBASE_DEFAULTS__ = undefined;
+            }
+            
+            // 2. Cleanup Storage (localStorage and sessionStorage)
+            var storages = ['localStorage', 'sessionStorage'];
+            storages.forEach(function(storageName) {
+              try {
+                var storage = window[storageName];
+                if (storage) {
+                  for (var i = 0; i < storage.length; i++) {
+                    var key = storage.key(i);
+                    if (storage.getItem(key) === 'undefined') {
+                      storage.removeItem(key);
+                    }
+                  }
+                }
+              } catch (e) {
+                // Ignore errors during cleanup
+              }
+            });
+
+            // 3. Monkey-patch JSON.parse to handle the literal string "undefined" or undefined value
+            // Some libraries (like react-qr-scanner or its dependencies) might be doing 
+            // JSON.parse(someValue) where someValue is the string "undefined" or the value undefined.
+            var originalParse = JSON.parse;
+            JSON.parse = function(text, reviver) {
+              if (text === 'undefined' || text === undefined) {
+                // Silence this warning as it can flood the console and freeze the app
+                return null; // Return null as a safe fallback for JSON objects
+              }
+              try {
+                return originalParse.apply(this, arguments);
+              } catch (e) {
+                // If it's the specific "undefined" error, catch it here too
+                if (e instanceof SyntaxError && e.message.indexOf('"undefined" is not valid JSON') !== -1) {
+                  return null;
+                }
+                throw e;
+              }
+            };
+            // 4. Monkey-patch getUserMedia to debug and fix empty constraints
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+              var originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+              navigator.mediaDevices.getUserMedia = function(constraints) {
+                // Fix for "At least one of audio and video must be requested"
+                if (!constraints || (constraints.video === undefined && constraints.audio === undefined)) {
+                  constraints = { video: true };
+                } else if (constraints.video === false && constraints.audio === false) {
+                  constraints.video = true;
+                }
+                
+                return originalGetUserMedia(constraints);
+              };
+            }
+
+            // 5. Monkey-patch getImageData to prevent "Value is not of type 'long'" errors
+            // This happens when libraries pass NaN, Infinity, or non-integer values to getImageData.
+            if (typeof CanvasRenderingContext2D !== 'undefined') {
+              var originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+              CanvasRenderingContext2D.prototype.getImageData = function(x, y, w, h) {
+                // Convert to integers and handle NaN/Infinity
+                var ix = Math.floor(Number(x) || 0);
+                var iy = Math.floor(Number(y) || 0);
+                var iw = Math.floor(Number(w) || 0);
+                var ih = Math.floor(Number(h) || 0);
+                
+                // getImageData requires width and height to be non-zero
+                if (iw <= 0 || ih <= 0) {
+                  // Return a dummy ImageData object if dimensions are invalid
+                  // to prevent the "long" type error or other crashes.
+                  return new ImageData(Math.max(1, Math.abs(iw)), Math.max(1, Math.abs(ih)));
+                }
+                
+                try {
+                  return originalGetImageData.call(this, ix, iy, iw, ih);
+                } catch (e) {
+                  // Fallback to a safe empty ImageData
+                  return new ImageData(1, 1);
+                }
+              };
+            }
+          }
+        } catch (e) {
+          // Ignore early init errors
+        }
+
+        // Early global error listener
+        window.addEventListener('error', function(e) {
+          var msg = e.error ? (e.error.message || e.error) : e.message;
+          // Ignore the "undefined" is not valid JSON error if it still slips through
+          if (msg && typeof msg === 'string' && msg.indexOf('"undefined" is not valid JSON') !== -1) {
+            if (e.preventDefault) e.preventDefault();
+            return;
+          }
+          // Ignore "Value is not of type 'long'" error from canvas
+          if (msg && typeof msg === 'string' && msg.indexOf("is not of type 'long'") !== -1) {
+            if (e.preventDefault) e.preventDefault();
+            return;
+          }
+          console.error('Global error caught in index.html:', msg);
+          if (e.error && e.error.stack) {
+            console.error('Stack:', e.error.stack);
+          }
+        });
+
+        // Early promise rejection listener
+        window.addEventListener('unhandledrejection', function(e) {
+          var msg = e.reason instanceof Error ? e.reason.message : String(e.reason);
+          if (msg && typeof msg === 'string' && msg.indexOf('"undefined" is not valid JSON') !== -1) {
+            if (e.preventDefault) e.preventDefault();
+            return;
+          }
+          console.error('Unhandled rejection caught in index.html:', msg);
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

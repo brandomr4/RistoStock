@@ -1,0 +1,104 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: products
+// Document ID: {productId}
+// Fields:
+//   - name: string (required)
+//   - category: string (required)
+//   - barcode: string (required)
+//   - unit: string (required)
+//   - currentQuantity: number (required)
+//   - minQuantity: number (required)
+//   - lastUpdated: timestamp (required)
+//
+// Collection: movements
+// Document ID: {movementId}
+// Fields:
+//   - productId: string (required)
+//   - type: string (required, enum: ['IN', 'OUT'])
+//   - quantity: number (required)
+//   - timestamp: timestamp (required)
+//   - userId: string (required)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'category', 'barcode', 'supplier', 'unit', 'currentQuantity', 'minQuantity']) &&
+             data.name is string &&
+             data.category is string &&
+             data.barcode is string &&
+             data.supplier is string &&
+             data.unit is string &&
+             data.currentQuantity is number &&
+             data.minQuantity is number &&
+             (!('expiryDate' in data) || data.expiryDate is string);
+    }
+
+    function isValidMovement(data) {
+      return data.keys().hasAll(['productId', 'type', 'timestamp', 'userId']) &&
+             data.productId is string &&
+             data.type in ['IN', 'OUT', 'CREATE', 'DELETE', 'UPDATE'] &&
+             data.userId == request.auth.uid &&
+             (!('quantity' in data) || data.quantity is number) &&
+             (!('details' in data) || data.details is string);
+    }
+
+    function isValidBatch(data) {
+      return data.keys().hasAll(['productId', 'quantity', 'expiryDate', 'supplier', 'barcode', 'receivedDate']) &&
+             data.productId is string &&
+             data.quantity is number &&
+             data.expiryDate is string &&
+             data.supplier is string &&
+             data.barcode is string &&
+             data.receivedDate is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+
+      match /batches/{batchId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && isValidBatch(request.resource.data);
+        allow update: if isAuthenticated() && isValidBatch(request.resource.data);
+        allow delete: if isAuthenticated();
+      }
+    }
+
+    // Allow collectionGroup queries for batches
+    match /{path=**}/batches/{batchId} {
+      allow read: if isAuthenticated();
+    }
+
+    match /movements/{movementId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMovement(request.resource.data);
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

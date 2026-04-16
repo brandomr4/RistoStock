@@ -1,0 +1,5 @@
+{
+  "name": "RistoStock",
+  "description": "Gestione magazzino rapida per ristoranti con scansione barcode e notifiche scorte.",
+  "requestFramePermissions": ["camera"]
+}
