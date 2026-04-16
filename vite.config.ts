@@ -45,6 +45,10 @@ export default defineConfig(({mode}) => {
             }
           ]
         },
+        devOptions: {
+          enabled: true,
+          type: 'module'
+        },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
           cleanupOutdatedCaches: true,

@@ -50,6 +50,12 @@ export const InstallPWA = () => {
       setShowInstallButton(true);
     }
 
+    // DEBUG: Force show if URL has ?pwa=debug
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('pwa') === 'debug') {
+      setShowInstallButton(true);
+    }
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
