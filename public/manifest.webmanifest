@@ -1,14 +1,12 @@
 {
-  "id": "com.ristostock.app",
-  "name": "RistoStock - Gestione Magazzino",
+  "name": "RistoStock",
   "short_name": "RistoStock",
-  "description": "Gestione magazzino rapida per ristoranti con scansione barcode.",
+  "description": "Gestione Magazzino Professionale per Ristorazione",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
   "icons": [
     {
       "src": "https://picsum.photos/seed/ristostock/192/192.png",
