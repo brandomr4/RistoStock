@@ -31,6 +31,22 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "https://picsum.photos/seed/logistiqo-mobile/720/1280",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Interfaccia Mobile"
+    },
+    {
+      "src": "https://picsum.photos/seed/logistiqo-desktop/1920/1080",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Interfaccia Desktop"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Nuovo Prodotto",
