@@ -51,6 +51,7 @@ import {
   Maximize
 } from 'lucide-react';
 import { motion, AnimatePresence, useAnimation } from 'motion/react';
+import { InstallPWA } from './components/InstallPWA';
 import { format, differenceInDays, parseISO, isBefore, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
 import Quagga from '@ericblade/quagga2';
@@ -527,7 +528,6 @@ const InventoryApp = () => {
   }, [errorMessage]);
 
   useEffect(() => {
-    seedInitialProducts();
     const unsubscribeProducts = subscribeToProducts(setProducts);
     const unsubscribeMovements = subscribeToMovements(movementsLimit, setMovements);
     
@@ -1643,6 +1643,7 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <AppContent />
+        <InstallPWA />
       </AuthProvider>
     </ErrorBoundary>
   );
