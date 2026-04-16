@@ -1,22 +1,25 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import firebaseConfigJSON from '../firebase-applet-config.json';
 
-// Configurazione Firebase: Preferenza alle variabili d'ambiente (Cloudflare), fallback al JSON (Locale)
+// Configurazione Firebase: Utilizza esclusivamente variabili d'ambiente Vite (VITE_ prefixed)
+// Questo permette di gestire le chiavi in modo sicuro e flessibile su Cloudflare Pages.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJSON.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJSON.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJSON.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJSON.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJSON.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJSON.appId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseConfigJSON.firestoreDatabaseId
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID
 };
 
-// Validazione minima
-if (!firebaseConfig.apiKey) {
-  console.warn("Firebase API Key non trovata. L'autenticazione potrebbe non funzionare.");
+// Validazione delle chiavi obbligatorie via console per facilitare il debug senza bloccare il build
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error(
+    "ERRORE CONFIGURAZIONE FIREBASE: Alcune chiavi obbligatorie (API Key o Project ID) sono mancanti. " +
+    "Assicurati di aver configurato le variabili d'ambiente nel pannello di Cloudflare Pages o nel file .env locale."
+  );
 }
 
 const app = initializeApp(firebaseConfig);
