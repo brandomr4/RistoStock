@@ -4,8 +4,17 @@ import App from './App.tsx';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
-// Register Service Worker using vite-plugin-pwa
-registerSW({ immediate: true });
+// Register Service Worker with proper periodic updates (non-hook version)
+const updateSW = registerSW({
+  onRegistered(r) {
+    if (r) {
+      setInterval(() => {
+        r.update();
+      }, 60 * 60 * 1000); // Check every hour
+    }
+  },
+  immediate: true
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

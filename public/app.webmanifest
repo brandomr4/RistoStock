@@ -1,13 +1,13 @@
 {
-  "id": "/",
-  "name": "RistoStock",
+  "id": "com.ristostock.pwa",
+  "name": "RistoStock - Gestione Magazzino",
   "short_name": "RistoStock",
   "description": "Gestione Magazzino Professionale per Ristorazione",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
   "theme_color": "#0f172a",
+  "background_color": "#0f172a",
   "orientation": "portrait",
   "icons": [
     {
