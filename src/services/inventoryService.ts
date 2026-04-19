@@ -30,12 +30,11 @@ export interface Product {
   id?: string;
   name: string;
   category: string;
-  barcode: string;
+  barcode: string; // Barcode Prodotto EAN
   supplier: string;
   unit: string;
-  currentQuantity: number;
   minQuantity: number;
-  expiryDate?: string; // ISO date string (legacy, will be derived from batches)
+  currentQuantity: number; // Somma di tutti i lotti (gestita lato DB o frontend)
   lastUpdated: any;
 }
 
@@ -44,9 +43,10 @@ export interface StockLot {
   productId: string;
   quantity: number;
   expiryDate: string;
-  supplier: string;
-  barcode: string;
+  batchBarcode: string; // Barcode/Numero Lotto
+  productBarcode?: string; // Barcode Prodotto singolo lotto
   receivedDate: any;
+  supplier: string;
 }
 
 export interface Movement {
@@ -124,6 +124,9 @@ export const adjustProductQuantity = async (productId: string, delta: number) =>
   try {
     const productRef = doc(db, 'products', productId);
     const productSnap = await getDoc(productRef);
+    if (!productSnap.exists()) {
+      throw new Error(`Prodotto con ID ${productId} non trovato`);
+    }
     const productData = productSnap.data() as Product;
 
     await updateDoc(productRef, {
@@ -221,34 +224,24 @@ export const addBatch = async (productId: string, batch: Omit<StockLot, 'id' | '
     };
     const docRef = await addDoc(collection(db, 'products', productId, 'batches'), batchData);
     
-    // Update total product quantity and next expiry date
+    // Update total product quantity
     const productRef = doc(db, 'products', productId);
-    const productSnap = await getDoc(productRef);
-    
-    if (!productSnap.exists()) {
-      throw new Error("Prodotto non trovato");
-    }
-    
-    const productData = productSnap.data() as Product;
-    
-    const updates: any = {
+    await updateDoc(productRef, {
       currentQuantity: increment(batch.quantity),
       lastUpdated: serverTimestamp()
-    };
-    
-    if (!productData.expiryDate || batch.expiryDate < productData.expiryDate) {
-      updates.expiryDate = batch.expiryDate;
-    }
-    
-    await updateDoc(productRef, updates);
+    });
 
     // Add movement
+    // Note: Need the product name.
+    const productSnap = await getDoc(productRef);
+    const productData = productSnap.data() as Product;
+
     await addMovement({
       productId,
       productName: productData.name,
       type: 'IN',
       quantity: batch.quantity,
-      details: isInitial ? 'Prodotto creato con scorta iniziale' : `Carico da ${batch.supplier}`
+      details: isInitial ? 'Prodotto creato con scorta iniziale' : `Carico, Lotto: ${batch.batchBarcode}`
     });
     
     return docRef;
@@ -261,16 +254,16 @@ export const deleteBatch = async (productId: string, batchId: string, quantity: 
   try {
     await deleteDoc(doc(db, 'products', productId, 'batches', batchId));
     
-    // Update total product quantity and next expiry date
-    const remainingBatches = await getDocs(query(collection(db, 'products', productId, 'batches'), orderBy('expiryDate', 'asc'), limit(1)));
-    const nextExpiry = remainingBatches.empty ? null : (remainingBatches.docs[0].data() as StockLot).expiryDate;
-
+    // Update total product quantity
     await updateDoc(doc(db, 'products', productId), {
-      currentQuantity: increment(-quantity),
-      expiryDate: nextExpiry,
-      lastUpdated: serverTimestamp()
+        currentQuantity: increment(-quantity),
+        lastUpdated: serverTimestamp()
     });
   } catch (error) {
+    // Check if it's the inner error we already handled
+    if (error instanceof Error && error.message.includes('operationType')) {
+      throw error;
+    }
     handleFirestoreError(error, OperationType.DELETE, `products/${productId}/batches/${batchId}`);
   }
 };
@@ -304,13 +297,9 @@ export const deductFromBatches = async (productId: string, quantityToDeduct: num
       }
     }
     
-    // Update total product quantity and next expiry date
-    const remainingBatches = await getDocs(query(collection(db, 'products', productId, 'batches'), orderBy('expiryDate', 'asc'), limit(1)));
-    const nextExpiry = remainingBatches.empty ? null : (remainingBatches.docs[0].data() as StockLot).expiryDate;
-    
+    // Update total product quantity
     await updateDoc(productRef, {
       currentQuantity: increment(-quantityToDeduct),
-      expiryDate: nextExpiry,
       lastUpdated: serverTimestamp()
     });
 
@@ -356,6 +345,66 @@ export const getProductByBarcode = async (barcode: string): Promise<Product | nu
   }
 };
 
+export const cleanupInactiveSuppliers = async () => {
+  const productsSnapshot = await getDocs(collection(db, 'products'));
+  const allProducts = productsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+  
+  // Trova fornitori attivi (prodotti con quantità > 0)
+  const activeSuppliers = new Set(
+    allProducts.filter(p => p.currentQuantity > 0).map(p => p.supplier)
+  );
+  
+  // Trova prodotti inattivi (quantità == 0) il cui fornitore non è attivo
+  const productsToUpdate = allProducts.filter(p => 
+    p.currentQuantity === 0 && p.supplier && !activeSuppliers.has(p.supplier)
+  );
+  
+  for (const product of productsToUpdate) {
+    if (product.id) {
+        await updateProduct(product.id, { ...product, supplier: '' });
+    }
+  }
+};
+
+export const getAllSuppliers = async (): Promise<string[]> => {
+  const suppliers = new Set<string>();
+  
+  // Da prodotti
+  const productsSnapshot = await getDocs(collection(db, 'products'));
+  productsSnapshot.docs.forEach(doc => {
+    const data = doc.data() as Product;
+    if (data.supplier) suppliers.add(data.supplier);
+  });
+  
+  // Da lotti
+  const batchesSnapshot = await getDocs(collectionGroup(db, 'batches'));
+  batchesSnapshot.docs.forEach(doc => {
+    const data = doc.data() as StockLot;
+    if (data.supplier) suppliers.add(data.supplier);
+  });
+  
+  return Array.from(suppliers).sort();
+};
+
+export const resetDatabase = async () => {
+  // Elimina tutti i prodotti
+  const products = await getDocs(collection(db, 'products'));
+  for (const docSnapshot of products.docs) {
+    // Elimina i lotti del prodotto
+    const batches = await getDocs(collection(db, 'products', docSnapshot.id, 'batches'));
+    for (const batchDoc of batches.docs) {
+        await deleteDoc(batchDoc.ref);
+    }
+    // Elimina il prodotto
+    await deleteDoc(docSnapshot.ref);
+  }
+  // Elimina tutti i movimenti
+  const movements = await getDocs(collection(db, 'movements'));
+  for (const docSnapshot of movements.docs) {
+    await deleteDoc(docSnapshot.ref);
+  }
+};
+
 export const seedInitialProducts = async () => {
   const today = new Date();
   const getFutureDate = (days: number) => {
@@ -388,7 +437,7 @@ export const seedInitialProducts = async () => {
         await addBatch(docRef.id, {
           quantity: currentQuantity,
           supplier: 'Fornitore Predefinito',
-          barcode: p.barcode,
+          batchBarcode: p.barcode,
           expiryDate: expiryDate || getFutureDate(30)
         });
       }

@@ -35,71 +35,13 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    function isValidProduct(data) {
-      return data.keys().hasAll(['name', 'category', 'barcode', 'supplier', 'unit', 'currentQuantity', 'minQuantity']) &&
-             data.name is string && data.name.size() < 100 &&
-             data.category is string && data.category.size() < 50 &&
-             data.barcode is string && data.barcode.size() < 50 &&
-             data.supplier is string && data.supplier.size() < 100 &&
-             data.unit is string && data.unit.size() < 20 &&
-             data.currentQuantity is number &&
-             data.minQuantity is number &&
-             (!('expiryDate' in data) || (data.expiryDate is string && data.expiryDate.size() < 20));
-    }
-
-    function isValidMovement(data) {
-      return data.keys().hasAll(['productId', 'type', 'timestamp', 'userId']) &&
-             data.productId is string && data.productId.size() < 50 &&
-             data.type in ['IN', 'OUT', 'CREATE', 'DELETE', 'UPDATE'] &&
-             data.userId == request.auth.uid &&
-             (!('quantity' in data) || data.quantity is number) &&
-             (!('details' in data) || (data.details is string && data.details.size() < 200)) &&
-             (!('productName' in data) || (data.productName is string && data.productName.size() < 100));
-    }
-
-    function isValidBatch(data) {
-      return data.keys().hasAll(['productId', 'quantity', 'expiryDate', 'supplier', 'barcode', 'receivedDate']) &&
-             data.productId is string && data.productId.size() < 50 &&
-             data.quantity is number &&
-             data.expiryDate is string && data.expiryDate.size() < 20 &&
-             data.supplier is string && data.supplier.size() < 100 &&
-             data.barcode is string && data.barcode.size() < 50 &&
-             data.receivedDate is timestamp;
-    }
 
     // ===============================================================
     // Rules
     // ===============================================================
 
-    match /products/{productId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidProduct(request.resource.data);
-      allow update: if isAuthenticated() && isValidProduct(request.resource.data);
-      allow delete: if isAuthenticated();
-
-      match /batches/{batchId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated() && isValidBatch(request.resource.data);
-        allow update: if isAuthenticated() && isValidBatch(request.resource.data);
-        allow delete: if isAuthenticated();
-      }
-    }
-
-    // Allow collectionGroup queries for batches
-    match /{path=**}/batches/{batchId} {
-      allow read: if isAuthenticated();
-    }
-
-    match /movements/{movementId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidMovement(request.resource.data);
-      allow update: if false; // I movimenti storici non dovrebbero essere modificabili
-      allow delete: if false; // I movimenti storici non dovrebbero essere cancellabili
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
     }
   }
 }
